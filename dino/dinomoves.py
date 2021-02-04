@@ -20,8 +20,8 @@ kit.servo[6].actuation_range=120
 kit.servo[7].actuation_range=120
 
 def shiftLeft():
-    kit.servo[0].angle=55
-    kit.servo[1].angle=15
+    kit.servo[0].angle=60
+    kit.servo[1].angle=10
 
 def shiftRight():
     kit.servo[0].angle=15
@@ -33,7 +33,7 @@ def stepLeft():
 
 def stepRight():
     kit.servo[2].angle=70
-    kit.servo[3].angle=95
+    kit.servo[3].angle=100
 
 def stand():
     kit.servo[0].angle=35
@@ -69,3 +69,6 @@ def walk(sleepSecs):
     walkLeft(sleepSecs)
     walkRight(sleepSecs)
 
+def bow():
+    kit.servo[2].angle=25
+    kit.servo[3].angle=110

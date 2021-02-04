@@ -9,7 +9,6 @@ Licensed under the MIT license.
 All text above must be included in any redistribution.
 """
 
-
 import random
 import digitalio
 import audioio
@@ -22,64 +21,47 @@ import dinomoves
 import adafruit_rfm69
 import busio
 
+###### initialize radio:
 spi = busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
 cs = digitalio.DigitalInOut(board.RX)
 reset = digitalio.DigitalInOut(board.TX)
 rfm69 = adafruit_rfm69.RFM69(spi, cs, reset, 915.0)
 
-while True:
-    packet = rfm69.receive()  # Wait for a packet to be received (up to 0.5 seconds)
-    if packet is not None:
-        packet_text = str(packet, 'ascii')
-        print('Received: {0}'.format(packet_text))
-        dinomoves.walk(0.3)
-    time.sleep(0.005)
 
-'''
-is_angle_toggle = True
+###### initialize neopixels:
+NUM_PIXELS = 15 # Number of pixels used in project
+NEOPIXEL_PIN = board.D5
+POWER_PIN = board.D10
+
+enable = digitalio.DigitalInOut(POWER_PIN)
+enable.direction = digitalio.Direction.OUTPUT
+enable.value = True
+
+strip = neopixel.NeoPixel(NEOPIXEL_PIN, NUM_PIXELS, brightness=0.1, auto_write=False)
+strip.fill(0)  # NeoPixels off ASAP on startup
+strip.show()
 
 # CUSTOMISE COLORS HERE:
 COLOR = (0, 120, 120)      # Default idle is light blue
-ALT_COLOR = (255, 50, 0)  # hit color is orange
+COLOR_IDLE = COLOR # 'idle' color is the default
 
 # CUSTOMISE IDLE PULSE SPEED HERE: 0 is fast, above 0 slows down
-IDLE_PULSE_SPEED = 0  # Default is 0 seconds
+IDLE_PULSE_SPEED = 0.001
 SWING_BLAST_SPEED = 0.007
 
 # CUSTOMISE BRIGHTNESS HERE: must be a number between 0 and 1
 IDLE_PULSE_BRIGHTNESS_MIN = 0.2  # Default minimum idle pulse brightness
 IDLE_PULSE_BRIGHTNESS_MAX = 1  # Default maximum idle pulse brightness
 
-# CUSTOMISE SENSITIVITY HERE: smaller numbers = more sensitive to motion
-HIT_THRESHOLD = 250
-SWING_THRESHOLD = 150
 
-# Set to the length in seconds of the "on.wav" file
-POWER_ON_SOUND_DURATION = 1.7
-
-NUM_PIXELS = 83  # Number of pixels used in project
-NEOPIXEL_PIN = board.D5
-POWER_PIN = board.D10
-
-enable = digitalio.DigitalInOut(POWER_PIN)
-enable.direction = digitalio.Direction.OUTPUT
-enable.value = False
-
-strip = neopixel.NeoPixel(NEOPIXEL_PIN, NUM_PIXELS, brightness=0.1, auto_write=False)
-strip.fill(0)  # NeoPixels off ASAP on startup
-strip.show()
-
+###### initialize speaker:
 audio = audioio.AudioOut(board.A0)  # Speaker
 wave_file = None
+wave_file_name = None
 
-# Set up accelerometer on I2C bus, 4G range:
-i2c = board.I2C()
-accel = adafruit_lis3dh.LIS3DH_I2C(i2c)
-accel.range = adafruit_lis3dh.RANGE_4_G
 
-COLOR_IDLE = COLOR # 'idle' color is the default
-COLOR_HIT = ALT_COLOR  # "hit" color is ALT_COLOR set above
-COLOR_SWING = ALT_COLOR  # "swing" color is ALT_COLOR set above
+###### dino movement initialization
+DINO_MOVE_DELAY=0.3 # wait time in seconds between motor moves
 
 
 def play_wav(name, loop=False):
@@ -91,15 +73,109 @@ def play_wav(name, loop=False):
                  by another sound).
     """
     global wave_file  # pylint: disable=global-statement
+    global wave_file_name  # pylint: disable=global-statement
+
+    if wave_file_name and wave_file_name == name and audio.playing:
+        print("wav play pass audio.playing: %s" % audio.playing)
+        pass
     print("playing", name)
     if wave_file:
         wave_file.close()
     try:
         wave_file = open('sounds/' + name + '.wav', 'rb')
+        wave_file_name = name
         wave = audiocore.WaveFile(wave_file)
         audio.play(wave, loop=loop)
     except OSError:
+        print("got an OSError")
         pass # we'll just skip playing then
+
+
+def mix(color_1, color_2, weight_2):
+    """
+    Blend between two colors with a given ratio.
+    :param color_1:  first color, as an (r,g,b) tuple
+    :param color_2:  second color, as an (r,g,b) tuple
+    :param weight_2: Blend weight (ratio) of second color, 0.0 to 1.0
+    :return (r,g,b) tuple, blended color
+    """
+    if weight_2 < 0.0:
+        weight_2 = 0.0
+    elif weight_2 > 1.0:
+        weight_2 = 1.0
+    weight_1 = 1.0 - weight_2
+    return (int(color_1[0] * weight_1 + color_2[0] * weight_2),
+            int(color_1[1] * weight_1 + color_2[1] * weight_2),
+            int(color_1[2] * weight_1 + color_2[2] * weight_2))
+
+
+###### Setup idle pulse
+idle_brightness = IDLE_PULSE_BRIGHTNESS_MIN  # current brightness of idle pulse
+idle_increment = 0.01  # Initial idle pulse direction
+
+
+###### Setup transform state
+is_bowing = False
+last_transformation=0
+
+
+###### main loop
+print("and here we go...")
+while True:
+    packet = rfm69.receive(timeout=0.01)  # Wait for a packet to be received (up to 0.5 seconds)
+    if packet is not None:
+        msg = str(packet, 'ascii')
+        if msg == "forward":
+            dinomoves.walk(DINO_MOVE_DELAY)
+        elif msg == "left":
+            dinomoves.walkRight(DINO_MOVE_DELAY)
+        elif msg == "right":
+            dinomoves.walkLeft(DINO_MOVE_DELAY)
+        elif msg == "A":
+            play_wav("happy_new_year_oliver_reformatted")
+        elif msg == "B":
+            play_wav("colette_noise")
+        elif msg == "select":
+            time_tmp = time.monotonic()
+            if last_transformation + 1.5 < time_tmp:
+                last_transformation = time_tmp
+                print("trying to transform, is_bowing: %s"%is_bowing)
+                if is_bowing:
+                    dinomoves.stand()
+                else:
+                    dinomoves.bow()
+                is_bowing=not is_bowing
+        elif msg == "special":
+            dinomoves.stand()
+            dinomoves.shiftLeft()
+            dinomoves.shiftRight()
+
+    # Idle pulse
+    idle_brightness += idle_increment  # Pulse up
+    if idle_brightness > IDLE_PULSE_BRIGHTNESS_MAX or \
+        idle_brightness < IDLE_PULSE_BRIGHTNESS_MIN:  # Then...
+        idle_increment *= -1  # Pulse direction flip
+    strip.fill([int(c*idle_brightness) for c in COLOR_IDLE])
+    strip.show()
+
+'''
+is_angle_toggle = True
+
+# CUSTOMISE SENSITIVITY HERE: smaller numbers = more sensitive to motion
+HIT_THRESHOLD = 250
+SWING_THRESHOLD = 150
+
+# Set to the length in seconds of the "on.wav" file
+POWER_ON_SOUND_DURATION = 1.7
+
+# Set up accelerometer on I2C bus, 4G range:
+i2c = board.I2C()
+accel = adafruit_lis3dh.LIS3DH_I2C(i2c)
+accel.range = adafruit_lis3dh.RANGE_4_G
+
+COLOR_IDLE = COLOR # 'idle' color is the default
+COLOR_HIT = ALT_COLOR  # "hit" color is ALT_COLOR set above
+COLOR_SWING = ALT_COLOR  # "swing" color is ALT_COLOR set above
 
 
 def power_on(sound, duration):
@@ -124,23 +200,6 @@ def power_on(sound, duration):
             prev = threshold
 
 
-def mix(color_1, color_2, weight_2):
-    """
-    Blend between two colors with a given ratio.
-    :param color_1:  first color, as an (r,g,b) tuple
-    :param color_2:  second color, as an (r,g,b) tuple
-    :param weight_2: Blend weight (ratio) of second color, 0.0 to 1.0
-    :return (r,g,b) tuple, blended color
-    """
-    if weight_2 < 0.0:
-        weight_2 = 0.0
-    elif weight_2 > 1.0:
-        weight_2 = 1.0
-    weight_1 = 1.0 - weight_2
-    return (int(color_1[0] * weight_1 + color_2[0] * weight_2),
-            int(color_1[1] * weight_1 + color_2[1] * weight_2),
-            int(color_1[2] * weight_1 + color_2[2] * weight_2))
-
 # List of swing wav files without the .wav in the name for use with play_wav()
 swing_sounds = [
     'colette_noise'
@@ -161,10 +220,6 @@ hit_sounds = [
 
 
 mode = 0  # Initial mode = OFF
-
-# Setup idle pulse
-idle_brightness = IDLE_PULSE_BRIGHTNESS_MIN  # current brightness of idle pulse
-idle_increment = 0.01  # Initial idle pulse direction
 
 # Main loop
 while True:
