@@ -133,22 +133,31 @@ while True:
             dinomoves.walkLeft(DINO_MOVE_DELAY)
         elif msg == "A":
             play_wav("happy_new_year_oliver_reformatted")
+            if is_bowing:
+                for i in range(0,3):
+                    dinomoves.dinoChomp(0.2)
         elif msg == "B":
             play_wav("colette_noise")
+            if is_bowing:
+                dinomoves.dinoChomp(0.3)
         elif msg == "select":
             time_tmp = time.monotonic()
             if last_transformation + 1.5 < time_tmp:
                 last_transformation = time_tmp
                 print("trying to transform, is_bowing: %s"%is_bowing)
                 if is_bowing:
-                    dinomoves.stand()
+                    dinomoves.robotTransform()
                 else:
-                    dinomoves.bow()
+                    dinomoves.dinoTransform()
                 is_bowing=not is_bowing
         elif msg == "special":
             dinomoves.stand()
-            dinomoves.shiftLeft()
-            dinomoves.shiftRight()
+            for i in range(0,3):
+                time.sleep(0.3)
+                dinomoves.shiftLeft()
+                time.sleep(0.3)
+                dinomoves.shiftRight()
+            dinomoves.stand()
 
     # Idle pulse
     idle_brightness += idle_increment  # Pulse up

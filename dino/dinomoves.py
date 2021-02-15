@@ -28,7 +28,7 @@ def shiftRight():
     kit.servo[1].angle=50
 
 def stepLeft():
-    kit.servo[2].angle=40
+    kit.servo[2].angle=30
     kit.servo[3].angle=60
 
 def stepRight():
@@ -83,7 +83,7 @@ def bow():
     kit.servo[3].angle=110
 
 def robotHead():
-    kit.servo[4].angle=60
+    kit.servo[4].angle=75
 
 def dinoHead():
     kit.servo[4].angle=5
@@ -93,6 +93,13 @@ def dinoMouthClose():
     
 def dinoMouthOpen():
     kit.servo[5].angle=70
+
+def dinoChomp(sleepSecs):
+    dinoMouthClose()
+    time.sleep(sleepSecs)
+    dinoMouthOpen()
+    time.sleep(sleepSecs)
+    dinoMouthClose()
 
 def robotShoulders():
     kit.servo[6].angle=95
@@ -112,13 +119,5 @@ def dinoTransform():
     dinoStand()
     dinoHead()
     dinoShoulders()
-    time.sleep(0.2)
-    dinoMouthOpen()
-    time.sleep(0.2)
-    dinoMouthClose()
-    time.sleep(0.2)
-    dinoMouthOpen()
-    time.sleep(0.2)
-    dinoMouthClose()
-    time.sleep(0.2)
-    dinoMouthOpen()
+    for i in range(0,2):
+        dinoChomp(0.25)
