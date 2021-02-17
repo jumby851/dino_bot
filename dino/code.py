@@ -115,12 +115,13 @@ idle_increment = 0.01  # Initial idle pulse direction
 
 
 ###### Setup transform state
-is_bowing = False
+is_bowing = True
 last_transformation=0
 
 
 ###### main loop
 print("and here we go...")
+dinomoves.dinoTransform()
 while True:
     packet = rfm69.receive(timeout=0.01)  # Wait for a packet to be received (up to 0.5 seconds)
     if packet is not None:
@@ -134,15 +135,15 @@ while True:
         elif msg == "A":
             play_wav("happy_new_year_oliver_reformatted")
             if is_bowing:
-                for i in range(0,3):
-                    dinomoves.dinoChomp(0.2)
+                for i in range(0,2):
+                    dinomoves.dinoChomp(0)
         elif msg == "B":
             play_wav("colette_noise")
             if is_bowing:
-                dinomoves.dinoChomp(0.3)
+                dinomoves.dinoChomp(0)
         elif msg == "select":
             time_tmp = time.monotonic()
-            if last_transformation + 1.5 < time_tmp:
+            if last_transformation + 5 < time_tmp:
                 last_transformation = time_tmp
                 print("trying to transform, is_bowing: %s"%is_bowing)
                 if is_bowing:
