@@ -24,12 +24,12 @@ DEFAULT_INCREMENTS=25
 def move(servoAngleTuples):
     for servo,angle in servoAngleTuples:
         kit.servo[servo].angle=angle
-    
+
 def slowMove(servoAngleTuples, timeDelay=0.005, increments=DEFAULT_INCREMENTS):
     if(increments <= 1):
         move(servoAngleTuples)
         return
-    
+
     servoAngleIncrementTuples = []
     for servoAngleTuple in servoAngleTuples:
         servo,angle = servoAngleTuple
@@ -77,13 +77,13 @@ def walkLeft(increments=DEFAULT_INCREMENTS):
     stepLeft(increments)
     balance(increments)
     stand(increments)
- 
+
 def walkRight(increments=DEFAULT_INCREMENTS):
     shiftLeft(increments)
     stepRight(increments)
     balance(increments)
     stand(increments)
-    
+
 def walk(increments=DEFAULT_INCREMENTS):
     walkLeft(increments)
     walkRight(increments)
@@ -125,10 +125,9 @@ def dinoTransform(increments=DEFAULT_INCREMENTS):
 
 def dance(increments=DEFAULT_INCREMENTS):
     stand(increments)
-    for i in range(0,3):
+    for i in range(0,4):
         shiftLeft(increments)
         shiftRight(increments)
         slowMove([(6,60),(7,60)], increments=increments)
         slowMove([(6,30),(7,30)], increments=increments)
     stand(increments)
-

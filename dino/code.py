@@ -119,6 +119,7 @@ is_bowing = True
 last_transformation=0
 last_happy_new_year=0
 last_coco_noise=0
+last_dance=0
 
 
 ###### main loop
@@ -160,7 +161,12 @@ while True:
                     dinomoves.dinoTransform()
                 is_bowing=not is_bowing
         elif msg == "special":
-            dinomoves.dance()
+            time_tmp = time.monotonic()
+            if last_dance + 8 < time_tmp:
+                last_dance = time_tmp
+                play_wav("baby_trex")
+                dinomoves.dance()
+            
 
     # Idle pulse
     idle_brightness += idle_increment  # Pulse up
