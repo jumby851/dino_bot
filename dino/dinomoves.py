@@ -19,13 +19,14 @@ kit.servo[5].actuation_range=120 # dino mouth
 kit.servo[6].actuation_range=120 # left shoulder
 kit.servo[7].actuation_range=120 # right shoulder
 
-def slowMove(servoAngleTuples, timeDelay=0.02, increments=50):
+def slowMove(servoAngleTuples, timeDelay=0.005, increments=25):
     servoAngleIncrementTuples = []
     for servoAngleTuple in servoAngleTuples:
         servo,angle = servoAngleTuple
         totalDiff = angle - kit.servo[servo].angle
         angleIncrement = totalDiff / increments
         servoAngleIncrementTuples.append((servo,angle,angleIncrement))
+        print("slow move: servo %s, newAngle %s, oldAngle %s, angleInc %s"%(servo,angle,kit.servo[servo].angle,angleIncrement))
 
     for i in range(0,increments):
         for servo,angle,angleIncrement in servoAngleIncrementTuples:
@@ -64,13 +65,11 @@ def stand():
 
 def robotStand():
     balance()
-    kit.servo[2].angle=85
-    kit.servo[3].angle=85
+    slowMove([(2,85),(3,85)])
 
 def dinoStand():
     balance()
-    kit.servo[2].angle=65
-    kit.servo[3].angle=110
+    slowMove([(2,65),(3,110)])
 
 def walkLeft(sleepSecs):
     shiftRight()
@@ -101,31 +100,27 @@ def bow():
     kit.servo[3].angle=110
 
 def robotHead():
-    kit.servo[4].angle=75
+    slowMove([(4,75)])
 
 def dinoHead():
-    kit.servo[4].angle=5
+    slowMove([(4,5)])
 
 def dinoMouthClose():
-    kit.servo[5].angle=30
+    slowMove([(5,30)], timeDelay=0.01, increments=20)
 
 def dinoMouthOpen():
-    kit.servo[5].angle=70
+    slowMove([(5,70)], timeDelay=0.01, increments=20)
 
 def dinoChomp(sleepSecs):
-    dinoMouthClose()
-    time.sleep(sleepSecs)
     dinoMouthOpen()
     time.sleep(sleepSecs)
     dinoMouthClose()
 
 def robotShoulders():
-    kit.servo[6].angle=95
-    kit.servo[7].angle=95
+    slowMove([(6,95),(7,95)])
 
 def dinoShoulders():
-    kit.servo[6].angle=10
-    kit.servo[7].angle=10
+    slowMove([(6,10),(7,10)])
 
 def robotTransform():
     robotStand()
@@ -138,4 +133,4 @@ def dinoTransform():
     dinoHead()
     dinoShoulders()
     for i in range(0,2):
-        dinoChomp(0.25)
+        dinoChomp(0)
