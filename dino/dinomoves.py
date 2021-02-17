@@ -10,14 +10,32 @@ import time
 from adafruit_servokit import ServoKit
 
 kit = ServoKit(channels=8, address=0x60)
-kit.servo[0].actuation_range=120
-kit.servo[1].actuation_range=120
-kit.servo[2].actuation_range=120
-kit.servo[3].actuation_range=120
-kit.servo[4].actuation_range=120
-kit.servo[5].actuation_range=120
-kit.servo[6].actuation_range=120
-kit.servo[7].actuation_range=120
+kit.servo[0].actuation_range=120 # left ankle
+kit.servo[1].actuation_range=120 # right ankle
+kit.servo[2].actuation_range=120 # left hip
+kit.servo[3].actuation_range=120 # right hip
+kit.servo[4].actuation_range=120 # neck
+kit.servo[5].actuation_range=120 # dino mouth
+kit.servo[6].actuation_range=120 # left shoulder
+kit.servo[7].actuation_range=120 # right shoulder
+
+def slowMove(servoAngleTuples, timeDelay=0.02, increments=50):
+    servoAngleIncrementTuples = []
+    for servoAngleTuple in servoAngleTuples:
+        servo,angle = servoAngleTuple
+        totalDiff = angle - kit.servo[servo].angle
+        angleIncrement = totalDiff / increments
+        servoAngleIncrementTuples.append((servo,angle,angleIncrement))
+
+    for i in range(0,increments):
+        for servo,angle,angleIncrement in servoAngleIncrementTuples:
+            currentAngle=kit.servo[servo].angle
+            updatedAngle=currentAngle+angleIncrement
+            kit.servo[servo].angle=updatedAngle
+        time.sleep(timeDelay)
+
+def move(servoAngleTuples):
+    slowMove(servoAngleTuples, timeDelay=0, increments=1)
 
 def shiftLeft():
     kit.servo[0].angle=50
@@ -28,30 +46,30 @@ def shiftRight():
     kit.servo[1].angle=50
 
 def stepLeft():
-    kit.servo[2].angle=30
+    kit.servo[2].angle=70
     kit.servo[3].angle=60
 
 def stepRight():
-    kit.servo[2].angle=70
+    kit.servo[2].angle=110
     kit.servo[3].angle=100
 
 def balance():
     kit.servo[0].angle=35
     kit.servo[1].angle=35
-    
+
 def stand():
     balance()
-    kit.servo[2].angle=50
-    kit.servo[3].angle=80
+    kit.servo[2].angle=85
+    kit.servo[3].angle=85
 
 def robotStand():
     balance()
-    kit.servo[2].angle=50
-    kit.servo[3].angle=80
+    kit.servo[2].angle=85
+    kit.servo[3].angle=85
 
 def dinoStand():
     balance()
-    kit.servo[2].angle=25
+    kit.servo[2].angle=65
     kit.servo[3].angle=110
 
 def walkLeft(sleepSecs):
@@ -90,7 +108,7 @@ def dinoHead():
 
 def dinoMouthClose():
     kit.servo[5].angle=30
-    
+
 def dinoMouthOpen():
     kit.servo[5].angle=70
 
