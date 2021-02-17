@@ -123,7 +123,7 @@ last_coco_noise=0
 
 ###### main loop
 print("and here we go...")
-dinomoves.dinoTransform()
+dinomoves.dinoTransform(increments=0)
 while True:
     packet = rfm69.receive(timeout=0.01)  # Wait for a packet to be received (up to 0.5 seconds)
     if packet is not None:

@@ -21,7 +21,15 @@ kit.servo[7].actuation_range=120 # right shoulder
 
 DEFAULT_INCREMENTS=25
 
+def move(servoAngleTuples):
+    for servo,angle in servoAngleTuples:
+        kit.servo[servo].angle=angle
+    
 def slowMove(servoAngleTuples, timeDelay=0.005, increments=DEFAULT_INCREMENTS):
+    if(increments <= 1):
+        move(servoAngleTuples)
+        return
+    
     servoAngleIncrementTuples = []
     for servoAngleTuple in servoAngleTuples:
         servo,angle = servoAngleTuple
@@ -36,9 +44,6 @@ def slowMove(servoAngleTuples, timeDelay=0.005, increments=DEFAULT_INCREMENTS):
             updatedAngle=currentAngle+angleIncrement
             kit.servo[servo].angle=updatedAngle
         time.sleep(timeDelay)
-
-def move(servoAngleTuples):
-    slowMove(servoAngleTuples, timeDelay=0, increments=1)
 
 def shiftLeft(increments=DEFAULT_INCREMENTS):
     slowMove([(0,50),(1,20)],increments=increments)
@@ -107,13 +112,13 @@ def dinoShoulders(increments=DEFAULT_INCREMENTS):
 
 def robotTransform(increments=DEFAULT_INCREMENTS):
     robotStand(increments)
-    robotHead(increments)
+    robotHead(increments*2)
     robotShoulders(increments)
     dinoMouthClose(increments)
 
 def dinoTransform(increments=DEFAULT_INCREMENTS):
     dinoStand(increments)
-    dinoHead(increments)
+    dinoHead(increments*2)
     dinoShoulders(increments)
     for i in range(0,2):
         dinoChomp(increments)
