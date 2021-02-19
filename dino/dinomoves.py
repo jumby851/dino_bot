@@ -19,7 +19,17 @@ kit.servo[5].actuation_range=120 # dino mouth
 kit.servo[6].actuation_range=120 # left shoulder
 kit.servo[7].actuation_range=120 # right shoulder
 
-def slowMove(servoAngleTuples, timeDelay=0.005, increments=25):
+DEFAULT_INCREMENTS=25
+
+def move(servoAngleTuples):
+    for servo,angle in servoAngleTuples:
+        kit.servo[servo].angle=angle
+
+def slowMove(servoAngleTuples, timeDelay=0.005, increments=DEFAULT_INCREMENTS):
+    if(increments <= 1):
+        move(servoAngleTuples)
+        return
+
     servoAngleIncrementTuples = []
     for servoAngleTuple in servoAngleTuples:
         servo,angle = servoAngleTuple
@@ -35,102 +45,89 @@ def slowMove(servoAngleTuples, timeDelay=0.005, increments=25):
             kit.servo[servo].angle=updatedAngle
         time.sleep(timeDelay)
 
-def move(servoAngleTuples):
-    slowMove(servoAngleTuples, timeDelay=0, increments=1)
+def shiftLeft(increments=DEFAULT_INCREMENTS):
+    slowMove([(0,50),(1,20)],increments=increments)
 
-def shiftLeft():
-    kit.servo[0].angle=50
-    kit.servo[1].angle=20
+def shiftRight(increments=DEFAULT_INCREMENTS):
+    slowMove([(0,20),(1,50)], increments=increments)
 
-def shiftRight():
-    kit.servo[0].angle=20
-    kit.servo[1].angle=50
+def stepLeft(increments=DEFAULT_INCREMENTS):
+    slowMove([(2,60),(3,50)], increments=increments)
 
-def stepLeft():
-    kit.servo[2].angle=70
-    kit.servo[3].angle=60
+def stepRight(increments=DEFAULT_INCREMENTS):
+    slowMove([(2,110),(3,100)], increments=increments)
 
-def stepRight():
-    kit.servo[2].angle=110
-    kit.servo[3].angle=100
+def balance(increments=DEFAULT_INCREMENTS):
+    slowMove([(0,35),(1,35)], increments=increments)
 
-def balance():
-    kit.servo[0].angle=35
-    kit.servo[1].angle=35
+def stand(increments=DEFAULT_INCREMENTS):
+    balance(increments)
+    slowMove([(2,85),(3,85)], increments=increments)
 
-def stand():
-    balance()
-    kit.servo[2].angle=85
-    kit.servo[3].angle=85
+def robotStand(increments=DEFAULT_INCREMENTS):
+    balance(increments)
+    slowMove([(2,85),(3,85)], increments=increments)
 
-def robotStand():
-    balance()
-    slowMove([(2,85),(3,85)])
+def dinoStand(increments=DEFAULT_INCREMENTS):
+    balance(increments)
+    slowMove([(2,65),(3,110)], increments=increments)
 
-def dinoStand():
-    balance()
-    slowMove([(2,65),(3,110)])
+def walkLeft(increments=DEFAULT_INCREMENTS):
+    shiftRight(increments)
+    stepLeft(increments)
+    balance(increments)
+    stand(increments)
 
-def walkLeft(sleepSecs):
-    shiftRight()
-    time.sleep(sleepSecs)
-    stepLeft()
-    time.sleep(sleepSecs)
-    balance()
-    time.sleep(sleepSecs)
-    stand()
-    time.sleep(sleepSecs)
+def walkRight(increments=DEFAULT_INCREMENTS):
+    shiftLeft(increments)
+    stepRight(increments)
+    balance(increments)
+    stand(increments)
 
-def walkRight(sleepSecs):
-    shiftLeft()
-    time.sleep(sleepSecs)
-    stepRight()
-    time.sleep(sleepSecs)
-    balance()
-    time.sleep(sleepSecs)
-    stand()
-    time.sleep(sleepSecs)
+def walk(increments=DEFAULT_INCREMENTS):
+    walkLeft(increments)
+    walkRight(increments)
 
-def walk(sleepSecs):
-    walkLeft(sleepSecs)
-    walkRight(sleepSecs)
+def robotHead(increments=DEFAULT_INCREMENTS):
+    slowMove([(4,75)], increments=increments)
 
-def bow():
-    kit.servo[2].angle=25
-    kit.servo[3].angle=110
+def dinoHead(increments=DEFAULT_INCREMENTS):
+    slowMove([(4,5)], increments=increments)
 
-def robotHead():
-    slowMove([(4,75)])
+def dinoMouthClose(increments=DEFAULT_INCREMENTS):
+    slowMove([(5,30)], timeDelay=0.01, increments=increments)
 
-def dinoHead():
-    slowMove([(4,5)])
+def dinoMouthOpen(increments=DEFAULT_INCREMENTS):
+    slowMove([(5,70)], timeDelay=0.01, increments=increments)
 
-def dinoMouthClose():
-    slowMove([(5,30)], timeDelay=0.01, increments=20)
+def dinoChomp(increments=DEFAULT_INCREMENTS):
+    dinoMouthOpen(increments)
+    dinoMouthClose(increments)
 
-def dinoMouthOpen():
-    slowMove([(5,70)], timeDelay=0.01, increments=20)
+def robotShoulders(increments=DEFAULT_INCREMENTS):
+    slowMove([(6,95),(7,95)], increments=increments)
 
-def dinoChomp(sleepSecs):
-    dinoMouthOpen()
-    time.sleep(sleepSecs)
-    dinoMouthClose()
+def dinoShoulders(increments=DEFAULT_INCREMENTS):
+    slowMove([(6,10),(7,10)], increments=increments)
 
-def robotShoulders():
-    slowMove([(6,95),(7,95)])
+def robotTransform(increments=DEFAULT_INCREMENTS):
+    robotStand(increments)
+    robotHead(increments*2)
+    robotShoulders(increments)
+    dinoMouthClose(increments)
 
-def dinoShoulders():
-    slowMove([(6,10),(7,10)])
-
-def robotTransform():
-    robotStand()
-    robotHead()
-    robotShoulders()
-    dinoMouthClose()
-
-def dinoTransform():
-    dinoStand()
-    dinoHead()
-    dinoShoulders()
+def dinoTransform(increments=DEFAULT_INCREMENTS):
+    dinoStand(increments)
+    dinoHead(increments*2)
+    dinoShoulders(increments)
     for i in range(0,2):
-        dinoChomp(0)
+        dinoChomp(increments)
+
+def dance(increments=DEFAULT_INCREMENTS):
+    stand(increments)
+    for i in range(0,4):
+        shiftLeft(increments)
+        shiftRight(increments)
+        slowMove([(6,60),(7,60)], increments=increments)
+        slowMove([(6,30),(7,30)], increments=increments)
+    stand(increments)

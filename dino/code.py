@@ -61,7 +61,7 @@ wave_file_name = None
 
 
 ###### dino movement initialization
-DINO_MOVE_DELAY=0.3 # wait time in seconds between motor moves
+DINO_MOVE_INCREMENTS=10 # num of increments to smooth motor motion
 
 
 def play_wav(name, loop=False):
@@ -114,36 +114,45 @@ idle_brightness = IDLE_PULSE_BRIGHTNESS_MIN  # current brightness of idle pulse
 idle_increment = 0.01  # Initial idle pulse direction
 
 
-###### Setup transform state
+###### Setup transform/button press state
 is_bowing = True
 last_transformation=0
+last_happy_new_year=0
+last_coco_noise=0
+last_dance=0
 
 
 ###### main loop
 print("and here we go...")
-dinomoves.dinoTransform()
+dinomoves.dinoTransform(increments=0)
 while True:
     packet = rfm69.receive(timeout=0.01)  # Wait for a packet to be received (up to 0.5 seconds)
     if packet is not None:
         msg = str(packet, 'ascii')
         if msg == "forward":
-            dinomoves.walk(DINO_MOVE_DELAY)
+            dinomoves.walk(DINO_MOVE_INCREMENTS)
         elif msg == "left":
-            dinomoves.walkRight(DINO_MOVE_DELAY)
+            dinomoves.walkRight(DINO_MOVE_INCREMENTS)
         elif msg == "right":
-            dinomoves.walkLeft(DINO_MOVE_DELAY)
+            dinomoves.walkLeft(DINO_MOVE_INCREMENTS)
         elif msg == "A":
-            play_wav("happy_new_year_oliver_reformatted")
-            if is_bowing:
-                for i in range(0,2):
-                    dinomoves.dinoChomp(0)
+            time_tmp = time.monotonic()
+            if last_happy_new_year + 2 < time_tmp:
+                last_happy_new_year = time_tmp
+                play_wav("happy_new_year_oliver_reformatted")
+                if is_bowing:
+                    for i in range(0,2):
+                        dinomoves.dinoChomp()
         elif msg == "B":
-            play_wav("colette_noise")
-            if is_bowing:
-                dinomoves.dinoChomp(0)
+            time_tmp = time.monotonic()
+            if last_coco_noise + 1.5 < time_tmp:
+                last_coco_noise = time_tmp
+                play_wav("colette_noise")
+                if is_bowing:
+                    dinomoves.dinoChomp()
         elif msg == "select":
             time_tmp = time.monotonic()
-            if last_transformation + 5 < time_tmp:
+            if last_transformation + 4 < time_tmp:
                 last_transformation = time_tmp
                 print("trying to transform, is_bowing: %s"%is_bowing)
                 if is_bowing:
@@ -152,13 +161,12 @@ while True:
                     dinomoves.dinoTransform()
                 is_bowing=not is_bowing
         elif msg == "special":
-            dinomoves.stand()
-            for i in range(0,3):
-                time.sleep(0.3)
-                dinomoves.shiftLeft()
-                time.sleep(0.3)
-                dinomoves.shiftRight()
-            dinomoves.stand()
+            time_tmp = time.monotonic()
+            if last_dance + 8 < time_tmp:
+                last_dance = time_tmp
+                play_wav("baby_trex")
+                dinomoves.dance()
+            
 
     # Idle pulse
     idle_brightness += idle_increment  # Pulse up
